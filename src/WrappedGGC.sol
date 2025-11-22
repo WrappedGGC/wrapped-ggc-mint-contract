@@ -17,12 +17,20 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 
+
 /// @title WrappedGGC Deposit/Mint Contract V1.0
 /// @notice Manages deposit and minting of Wrapped GGC tokens backed by crptogrpahic prrof of BOG Ghana Gold Coin reserves
 /// @author geeloko.eth
 
 contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    /// @notice The reserve proof contract.
+    address public reserveProof;
+    /// @notice The total deposited amount.
+    uint256 public totalDeposited;
+    /// @notice The total pending mint amount.
+    uint256 public totalPendingMint;
 
     /// @notice The deposit token check if is accepted.
     mapping(address => bool) public depositERC20;
@@ -77,8 +85,10 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
     function deposit(address token, uint256 amount, uint256 rate) public nonReentrant {
         if (!depositERC20[token]) revert TokenNotAdded();
         IERC20(token).transferFrom(msg.sender, address(this), amount);
+        totalDeposited += amount;
         depositBalance[msg.sender] += amount;
         uint256 mintable = amount * rate;
+        totalPendingMint += mintable;
         mintBalance[msg.sender] += mintable;
         emit Deposit(msg.sender, amount, mintable, block.timestamp);
     }
@@ -89,4 +99,5 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
         mintBalance[to] -= mintable;
         emit Mint(to, mintable, block.timestamp);
     }
+
 }
