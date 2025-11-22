@@ -26,6 +26,14 @@ contract WrappedGGC is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGua
 
     /// @notice The deposit token check if is accepted.
     mapping(address => bool) public depositERC20;
+    /// @notice The deposit balance of a address.
+    mapping(address => uint256) public depositBalance;
+    /// @notice The mint balance of a address.
+    mapping(address => uint256) public mintBalance;
+
+
+    /// @notice The deposit event.
+    event Deposit(address indexed to, uint256 indexed amount, uint256 indexed timestamp);
 
 
     /// @notice Error messages
@@ -61,11 +69,13 @@ contract WrappedGGC is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGua
         depositERC20[token] = false;
     }
 
-    function deposit(address token, uint256 amount) public {
+    function deposit(address token, uint256 amount) public nonReentrant {
         IERC20(token).transferFrom(msg.sender, address(this), amount);
+        depositBalance[msg.sender] += amount;
+        emit Deposit(msg.sender, amount, block.timestamp);
     }
 
-    function mint(address to, uint256 amount) public onlyOwner {
+    function mint(address to, uint256 amount) public onlyOwner nonReentrant {
         _mint(to, amount);
     }
 }
