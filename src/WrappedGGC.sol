@@ -21,7 +21,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 /// @notice Manages deposit and minting of Wrapped GGC tokens backed by crptogrpahic prrof of BOG Ghana Gold Coin reserves
 /// @author geeloko.eth
 
-contract WrappedGGC is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGuard {
+contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice The deposit token check if is accepted.
@@ -34,6 +34,7 @@ contract WrappedGGC is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGua
 
     /// @notice The deposit event.
     event Deposit(address indexed to, uint256 indexed amount, uint256 indexed mintable, uint256 timestamp);
+    /// @notice The mint event.
     event Mint(address indexed to, uint256 indexed minted, uint256 timestamp);
 
 
@@ -41,6 +42,9 @@ contract WrappedGGC is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGua
     error InvalidAddress();
     error TokenAlreadyAdded();
     error TokenNotAdded();
+    error InvalidAmount();
+    error InsufficientDepositBalance();
+
 
     constructor(address initialOwner)
         ERC20("WrappedGGC", "WGGC")
@@ -71,6 +75,7 @@ contract WrappedGGC is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGua
     }
 
     function deposit(address token, uint256 amount, uint256 rate) public nonReentrant {
+        if (!depositERC20[token]) revert TokenNotAdded();
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         depositBalance[msg.sender] += amount;
         uint256 mintable = amount * rate;
