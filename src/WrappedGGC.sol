@@ -33,7 +33,8 @@ contract WrappedGGC is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGua
 
 
     /// @notice The deposit event.
-    event Deposit(address indexed to, uint256 indexed amount, uint256 indexed timestamp);
+    event Deposit(address indexed to, uint256 indexed amount, uint256 indexed mintable, uint256 indexed timestamp);
+    event Mint(address indexed to, uint256 indexed amount, uint256 indexed timestamp);
 
 
     /// @notice Error messages
@@ -69,13 +70,18 @@ contract WrappedGGC is ERC20, ERC20Burnable, Ownable, ERC20Permit, ReentrancyGua
         depositERC20[token] = false;
     }
 
-    function deposit(address token, uint256 amount) public nonReentrant {
+    function deposit(address token, uint256 amount, uint256 rate) public nonReentrant {
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         depositBalance[msg.sender] += amount;
-        emit Deposit(msg.sender, amount, block.timestamp);
+        uint256 mintable = amount * rate;
+        mintBalance[msg.sender] += mintable;
+        emit Deposit(msg.sender, amount, rate, block.timestamp);
     }
 
-    function mint(address to, uint256 amount) public onlyOwner nonReentrant {
-        _mint(to, amount);
+    function mint(address to, uint256 amount, uint256 mintable) public onlyOwner nonReentrant {
+        _mint(to, mintable);
+        depositBalance[to] -= amount;
+        mintBalance[to] -= mintable;
+        emit Mint(to, amount, block.timestamp);
     }
 }
