@@ -97,7 +97,7 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         totalDeposited += amount;
         depositBalance[msg.sender] += amount;
-        uint256 mintable = amount / rate;
+        uint256 mintable = (amount * 1e18) / rate;
         totalPendingMint += mintable;
         mintBalance[msg.sender] += mintable;
         emit Deposit(msg.sender, amount, mintable, block.timestamp);
