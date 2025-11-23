@@ -2,6 +2,9 @@
 // Compatible with OpenZeppelin Contracts ^5.5.0
 pragma solidity ^0.8.27;
 
+/// @dev Interface imports
+import { IReserveProof } from "./interfaces/IReserveProof.sol";
+
 /// @dev OpenZeppelin ERC20 imports
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -25,8 +28,8 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    /// @notice The reserve proof contract.
-    address public reserveProof;
+    /// @notice The reserve proof contract address
+    IReserveProof public reserveProof;
     /// @notice The total deposited amount.
     uint256 public totalDeposited;
     /// @notice The total pending mint amount.
@@ -52,13 +55,16 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
     error TokenNotAdded();
     error InvalidAmount();
     error InsufficientDepositBalance();
+    error InsufficientReserveProof();
 
 
-    constructor(address initialOwner)
+    constructor(address initialOwner, address reserveProofAddress)
         ERC20("WrappedGGC", "WGGC")
         Ownable(initialOwner)
         ERC20Permit("WrappedGGC")
-    {}
+    {
+        reserveProof = IReserveProof(reserveProofAddress);
+    }
     
     /// @notice Add erc20contract token to depositERC20s.
     /// @param token The address of the ERC20 contract.
@@ -94,6 +100,7 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
     }
 
     function mint(address to, uint256 amount, uint256 mintable) public onlyOwner nonReentrant {
+        if (totalSupply() + totalPendingMint == reserveProof.totalSupply()) revert InsufficientReserveProof();
         _mint(to, mintable);
         depositBalance[to] -= amount;
         mintBalance[to] -= mintable;
