@@ -56,6 +56,7 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
     error InvalidAmount();
     error InsufficientDepositBalance();
     error InsufficientReserveProof();
+    error NotEnoughTokens();
 
 
     constructor(address initialOwner, address reserveProofAddress)
@@ -141,13 +142,25 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
     /// @param amount The amount of the WrappedGGC tokens to mint.
     /// @param mintable The amount of the WrappedGGC tokens to mint.
     function mint(address to, uint256 amount, uint256 mintable) public onlyOwner nonReentrant {
-        if (totalSupply() + totalPendingMint == reserveProof.totalSupply()) revert InsufficientReserveProof();
+        if (totalSupply() + totalPendingMint != reserveProof.totalSupply()) revert InsufficientReserveProof();
         _mint(to, mintable);
         depositBalance[to] -= amount;
         totalDeposited -= amount;
         mintBalance[to] -= mintable;
         totalPendingMint -= mintable;
         emit Mint(to, mintable, block.timestamp);
+    }
+
+
+    /// @notice Withdraw BOG Ghana Gold Coin sales from wrapped ggc.
+    /// @param token The address of the ERC20 contract.
+    /// @param to The address to send the sales to.
+    function withdraw(address token, address to) external onlyOwner nonReentrant {
+        if (token == address(0)) revert InvalidAddress();
+        IERC20 tokenContract = IERC20(token);
+        uint256 amount = tokenContract.balanceOf(address(this));
+        if (amount == 0) revert NotEnoughTokens();
+        tokenContract.safeTransfer(to, amount);
     }
 
 }
