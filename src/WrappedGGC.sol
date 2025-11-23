@@ -90,12 +90,42 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
 
     /// @notice Deposit an amount of an ERC20 token into the contract.
     /// @param token The address of the ERC20 token contract.
-    /// @param amountOZ The amount of the gold coin backed BOG Ghana Gold Coin to purchase.
-    function deposit(address token, uint256 amountOZ) public nonReentrant {
+    function depositQuaterOZ(address token) public nonReentrant {
         if (!depositERC20[token]) revert TokenNotAdded();
-        if (amountOZ != 25 || amountOZ != 50 || amountOZ != 100) revert InvalidAmount();
         uint256 rate = reserveProof.pricePerOzUSD();
-        uint256 amountUSD = rate / (amountOZ / 100);
+        uint256 amountUSD = rate * 1e2 / 25;
+        IERC20(token).transferFrom(msg.sender, address(this), amountUSD);
+        totalDeposited += amountUSD;
+        depositBalance[msg.sender] += amountUSD;
+        uint256 mintable = (amountUSD * 1e18) / rate;
+        totalPendingMint += mintable;
+        mintBalance[msg.sender] += mintable;
+        emit Deposit(msg.sender, amountUSD, mintable, block.timestamp);
+    }
+
+
+    /// @notice Deposit an amount of an ERC20 token into the contract.
+    /// @param token The address of the ERC20 token contract.
+    function depositHalfOZ(address token) public nonReentrant {
+        if (!depositERC20[token]) revert TokenNotAdded();
+        uint256 rate = reserveProof.pricePerOzUSD();
+        uint256 amountUSD = rate * 1e2 / 50;
+        IERC20(token).transferFrom(msg.sender, address(this), amountUSD);
+        totalDeposited += amountUSD;
+        depositBalance[msg.sender] += amountUSD;
+        uint256 mintable = (amountUSD * 1e18) / rate;
+        totalPendingMint += mintable;
+        mintBalance[msg.sender] += mintable;
+        emit Deposit(msg.sender, amountUSD, mintable, block.timestamp);
+    }
+
+
+    /// @notice Deposit an amount of an ERC20 token into the contract.
+    /// @param token The address of the ERC20 token contract.
+    function depositOZ(address token) public nonReentrant {
+        if (!depositERC20[token]) revert TokenNotAdded();
+        uint256 rate = reserveProof.pricePerOzUSD();
+        uint256 amountUSD = rate * 1e2 / 100;
         IERC20(token).transferFrom(msg.sender, address(this), amountUSD);
         totalDeposited += amountUSD;
         depositBalance[msg.sender] += amountUSD;
