@@ -88,22 +88,33 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
         depositERC20[token] = false;
     }
 
-    function deposit(address token, uint256 amount, uint256 rate) public nonReentrant {
+    /// @notice Deposit an amount of an ERC20 token into the contract.
+    /// @param token The address of the ERC20 token contract.
+    /// @param amount The amount of the ERC20 token to deposit.
+    function deposit(address token, uint256 amount) public nonReentrant {
         if (!depositERC20[token]) revert TokenNotAdded();
+        uint256 rate = reserveProof.pricePerOzUSD();
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         totalDeposited += amount;
         depositBalance[msg.sender] += amount;
-        uint256 mintable = amount * rate;
+        uint256 mintable = amount / rate;
         totalPendingMint += mintable;
         mintBalance[msg.sender] += mintable;
         emit Deposit(msg.sender, amount, mintable, block.timestamp);
     }
 
+
+    /// @notice Mint a amount of WrappedGGC tokens to a address.
+    /// @param to The address to mint the WrappedGGC tokens to.
+    /// @param amount The amount of the WrappedGGC tokens to mint.
+    /// @param mintable The amount of the WrappedGGC tokens to mint.
     function mint(address to, uint256 amount, uint256 mintable) public onlyOwner nonReentrant {
         if (totalSupply() + totalPendingMint == reserveProof.totalSupply()) revert InsufficientReserveProof();
         _mint(to, mintable);
         depositBalance[to] -= amount;
+        totalDeposited -= amount;
         mintBalance[to] -= mintable;
+        totalPendingMint -= mintable;
         emit Mint(to, mintable, block.timestamp);
     }
 
