@@ -90,17 +90,19 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
 
     /// @notice Deposit an amount of an ERC20 token into the contract.
     /// @param token The address of the ERC20 token contract.
-    /// @param amount The amount of the ERC20 token to deposit.
-    function deposit(address token, uint256 amount) public nonReentrant {
+    /// @param amountOZ The amount of the gold coin backed BOG Ghana Gold Coin to purchase.
+    function deposit(address token, uint256 amountOZ) public nonReentrant {
         if (!depositERC20[token]) revert TokenNotAdded();
+        if (amountOZ != 25 || amountOZ != 50 || amountOZ != 100) revert InvalidAmount();
         uint256 rate = reserveProof.pricePerOzUSD();
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
-        totalDeposited += amount;
-        depositBalance[msg.sender] += amount;
-        uint256 mintable = (amount * 1e18) / rate;
+        uint256 amountUSD = rate / (amountOZ / 100);
+        IERC20(token).transferFrom(msg.sender, address(this), amountUSD);
+        totalDeposited += amountUSD;
+        depositBalance[msg.sender] += amountUSD;
+        uint256 mintable = (amountUSD * 1e18) / rate;
         totalPendingMint += mintable;
         mintBalance[msg.sender] += mintable;
-        emit Deposit(msg.sender, amount, mintable, block.timestamp);
+        emit Deposit(msg.sender, amountUSD, mintable, block.timestamp);
     }
 
 
