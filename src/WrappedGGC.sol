@@ -94,7 +94,7 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
     function depositQuaterOZ(address token) public nonReentrant {
         if (!depositERC20[token]) revert TokenNotAdded();
         uint256 rate = reserveProof.pricePerOzUSD();
-        uint256 amountUSD = rate * 1e2 / 25;
+        uint256 amountUSD = rate * 25 / 1e2;
         IERC20(token).transferFrom(msg.sender, address(this), amountUSD);
         totalDeposited += amountUSD;
         depositBalance[msg.sender] += amountUSD;
@@ -110,7 +110,7 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
     function depositHalfOZ(address token) public nonReentrant {
         if (!depositERC20[token]) revert TokenNotAdded();
         uint256 rate = reserveProof.pricePerOzUSD();
-        uint256 amountUSD = rate * 1e2 / 50;
+        uint256 amountUSD = rate * 50 / 1e2;
         IERC20(token).transferFrom(msg.sender, address(this), amountUSD);
         totalDeposited += amountUSD;
         depositBalance[msg.sender] += amountUSD;
@@ -126,7 +126,7 @@ contract WrappedGGC is ERC20, ERC20Burnable, ERC20Permit, Ownable, ReentrancyGua
     function depositOZ(address token) public nonReentrant {
         if (!depositERC20[token]) revert TokenNotAdded();
         uint256 rate = reserveProof.pricePerOzUSD();
-        uint256 amountUSD = rate * 1e2 / 100;
+        uint256 amountUSD = rate * 100 / 1e2;
         IERC20(token).transferFrom(msg.sender, address(this), amountUSD);
         totalDeposited += amountUSD;
         depositBalance[msg.sender] += amountUSD;
